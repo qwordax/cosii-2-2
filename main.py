@@ -1,4 +1,5 @@
 import cv2 as cv
+import numpy as np
 
 def gamma_correction(image, a, gamma):
     rows, cols = image.shape
@@ -14,11 +15,49 @@ def gamma_correction(image, a, gamma):
 
     return image
 
-def erosion(image):
-    return image
+def erosion(image, kernel):
+    rows, cols = image.shape
+    k_rows, k_cols = kernel.shape
 
-def dilation(image):
-    return image
+    k_rows_2, k_cols_2 = k_rows // 2, k_cols // 2
+
+    result = image.copy()
+
+    for i in range(k_rows_2, rows - k_rows_2):
+        for j in range(k_cols_2, cols - k_cols_2):
+            min_value = 255
+
+            for k in range(k_rows):
+                for l in range(k_cols):
+                    pixel = image[i-k_rows_2+k, j-k_cols_2+l]
+                    k_value = kernel[k, l]
+                    min_value = min(min_value, pixel*k_value)
+
+            result[i, j] = min_value
+
+    return result
+
+def dilation(image, kernel):
+    rows, cols = image.shape
+    k_rows, k_cols = kernel.shape
+
+    k_rows_2, k_cols_2 = k_rows // 2, k_cols // 2
+
+    result = image.copy()
+
+    for i in range(k_rows_2, rows - k_rows_2):
+        for j in range(k_cols_2, cols - k_cols_2):
+            max_value = 0
+
+            for k in range(k_rows):
+                for l in range(k_cols):
+                    pixel = image[i-k_rows_2+k, j-k_cols_2+l]
+                    k_value = kernel[k, l]
+                    max_value = max(max_value, pixel*k_value)
+
+            result[i, j] = max_value
+
+    return result
 
 def threshold(image):
     return image
@@ -30,6 +69,12 @@ def k_means(image, k):
     pass
 
 def main():
+    kernel = np.array([[1, 1, 1, 1, 1],
+                       [1, 1, 1, 1, 1],
+                       [1, 1, 1, 1, 1],
+                       [1, 1, 1, 1, 1],
+                       [1, 1, 1, 1, 1]], dtype=np.uint8)
+
     path = input('path: ')
     k = int(input('k: '))
 
@@ -38,8 +83,8 @@ def main():
     cv.imshow('Initial Image', image)
 
     image = gamma_correction(image, 2, 6)
-    image = erosion(image)
-    image = dilation(image)
+    image = erosion(image, kernel)
+    image = dilation(image, kernel)
     image = threshold(image)
 
     cv.imshow('Binary Image', image)
