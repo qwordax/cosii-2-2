@@ -1,5 +1,4 @@
 import cv2 as cv
-import math
 import numpy as np
 
 def gamma_correction(image, a, gamma):
@@ -124,8 +123,8 @@ def params(component):
 
     compactness = perimeter * perimeter / square
 
-    elongation = ((m20 + m02 + math.sqrt((m20-m02) ** 2 + 4*m11 ** 2)) /
-                  (m20 + m02 - math.sqrt((m20-m02) ** 2 + 4*m11 ** 2)))
+    elongation = ((m20 + m02 + np.sqrt((m20-m02) ** 2 + 4*m11 ** 2)) /
+                  (m20 + m02 - np.sqrt((m20-m02) ** 2 + 4*m11 ** 2)))
 
     return [square, perimeter, compactness, elongation, static_x, static_y]
 
@@ -162,9 +161,10 @@ def components(image):
                 data_row = params(component);
 
                 if data_row[0] > 200:
-                    data.append(data_row)
+                    data.append(data_row[:4])
 
-                    print('%13s%d' % ('', index))
+                    print()
+                    print('%11s: %d' % ('index', index))
                     print('%11s: %d' % ('square', data_row[0]))
                     print('%11s: %d' % ('perimeter', data_row[1]))
                     print('%11s: %.2f' % ('compactness', data_row[2]))
@@ -174,10 +174,36 @@ def components(image):
 
                     cv.imshow(str(index), component); index += 1
 
-    return data
+    return np.array(data)
+
+def distance(a, b):
+    return np.sqrt(np.sum((a-b) ** 2))
 
 def k_means(data, k):
-    pass
+    rows, _ = data.shape
+
+    cluster_centers = data[np.random.choice(rows, k, replace=False)]
+    cluster_assigns = np.zeros(rows)
+
+    for _ in range(10):
+        for i, row in enumerate(data):
+            distances = [distance(row, center) for center in cluster_centers]
+            closest_cluster = np.argmin(distances)
+            cluster_assigns[i] = closest_cluster
+
+        for cluster in range(k):
+            cluster_rows = data[cluster_assigns == cluster]
+
+            if len(cluster_rows) > 0:
+                cluster_centers[cluster] = np.mean(cluster_rows, axis=0)
+
+    print()
+
+    for i in range(k):
+        cluster_components = ([j+1 for j, cluster in enumerate(cluster_assigns)
+                               if cluster == i])
+
+        print(f'{i+1}: {cluster_components}')
 
 def main():
     kernel = np.array([[1, 1, 1, 1, 1],
