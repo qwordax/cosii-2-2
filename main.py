@@ -6,6 +6,9 @@ def gamma_correction():
 def erosion():
     pass
 
+def dilation():
+    pass
+
 def main():
     path = input('path: ')
     k = int(input('k: '))
