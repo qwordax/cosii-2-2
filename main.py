@@ -1,4 +1,5 @@
 import cv2 as cv
+import math
 import numpy as np
 
 def gamma_correction(image, a, gamma):
@@ -6,7 +7,7 @@ def gamma_correction(image, a, gamma):
 
     for i in range(rows):
         for j in range(cols):
-            new_pixel = int(a * pow(image[i, j] / 255, gamma) * 255)
+            new_pixel = int(a * pow(image[i, j]/255, gamma) * 255)
 
             if new_pixel > 255:
                 new_pixel = 255
@@ -19,12 +20,12 @@ def erosion(image, kernel):
     rows, cols = image.shape
     k_rows, k_cols = kernel.shape
 
-    k_rows_2, k_cols_2 = k_rows // 2, k_cols // 2
+    k_rows_2, k_cols_2 = k_rows//2, k_cols//2
 
     result = image.copy()
 
-    for i in range(k_rows_2, rows - k_rows_2):
-        for j in range(k_cols_2, cols - k_cols_2):
+    for i in range(k_rows_2, rows-k_rows_2):
+        for j in range(k_cols_2, cols-k_cols_2):
             min_value = 255
 
             for k in range(k_rows):
@@ -41,12 +42,12 @@ def dilation(image, kernel):
     rows, cols = image.shape
     k_rows, k_cols = kernel.shape
 
-    k_rows_2, k_cols_2 = k_rows // 2, k_cols // 2
+    k_rows_2, k_cols_2 = k_rows//2, k_cols//2
 
     result = image.copy()
 
-    for i in range(k_rows_2, rows - k_rows_2):
-        for j in range(k_cols_2, cols - k_cols_2):
+    for i in range(k_rows_2, rows-k_rows_2):
+        for j in range(k_cols_2, cols-k_cols_2):
             max_value = 0
 
             for k in range(k_rows):
@@ -84,10 +85,98 @@ def threshold(image):
 
     return (image > best_threshold).astype(np.uint8) * 255
 
-def components(image):
-    pass
+def params(component):
+    rows, cols = component.shape
 
-def k_means(image, k):
+    square = 0
+    perimeter = 0
+    compactness = 0
+    elongation = 0
+    static_x = 0
+    static_y = 0
+
+    m11 = 0
+    m02 = 0
+    m20 = 0
+
+    for i in range(rows):
+        for j in range(cols):
+            if component[i, j] == 255:
+                square += 1
+                static_x += i
+                static_y += j
+
+                if (i == 0 or i == rows-1 or
+                    j == 0 or j == cols-1):
+                    perimeter += 1
+                elif (component[i, j+1] == 0 or
+                      component[i, j-1] == 0 or
+                      component[i+1, j] == 0 or
+                      component[i-1, j] == 0):
+                    perimeter += 1
+
+    for i in range(rows):
+        for j in range(cols):
+            if component[i, j] == 255:
+                m11 += (i - static_x/square) * (j - static_y/square)
+                m02 += (i - static_x/square) ** 2
+                m20 += (j - static_y/square) ** 2
+
+    compactness = perimeter * perimeter / square
+
+    elongation = ((m20 + m02 + math.sqrt((m20-m02) ** 2 + 4*m11 ** 2)) /
+                  (m20 + m02 - math.sqrt((m20-m02) ** 2 + 4*m11 ** 2)))
+
+    return [square, perimeter, compactness, elongation, static_x, static_y]
+
+def components(image):
+    data = []
+
+    rows, cols = image.shape
+    index = 1
+
+    labeled = np.zeros_like(image, dtype=int)
+
+    for i in range(rows):
+        for j in range(cols):
+            if image[i, j] == 255 and labeled[i, j] == 0:
+                component = np.zeros((rows, cols), dtype=np.uint8)
+
+                stack = [(i, j)]
+
+                while stack:
+                    x, y = stack.pop()
+
+                    if (x >= 0 and x < rows and
+                        y >= 0 and y < cols and
+                        image[x, y] == 255 and
+                        labeled[x, y] == 0):
+                        labeled[x, y] = index
+                        component[x, y] = 255
+
+                        stack.extend([(x+1, y),
+                                      (x-1, y),
+                                      (x, y+1),
+                                      (x, y-1)])
+
+                data_row = params(component);
+
+                if data_row[0] > 200:
+                    data.append(data_row)
+
+                    print('%13s%d' % ('', index))
+                    print('%11s: %d' % ('square', data_row[0]))
+                    print('%11s: %d' % ('perimeter', data_row[1]))
+                    print('%11s: %.2f' % ('compactness', data_row[2]))
+                    print('%11s: %.2f' % ('elongation', data_row[3]))
+                    print('%11s: %d' % ('static_x', data_row[4]))
+                    print('%11s: %d' % ('static_y', data_row[5]))
+
+                    cv.imshow(str(index), component); index += 1
+
+    return data
+
+def k_means(data, k):
     pass
 
 def main():
@@ -111,8 +200,7 @@ def main():
 
     cv.imshow('Binary Image', image)
 
-    components(image)
-    k_means(image, k)
+    k_means(components(image), k)
 
     cv.waitKey(0)
 
