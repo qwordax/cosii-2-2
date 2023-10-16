@@ -1,12 +1,18 @@
 import cv2 as cv
 
-def gamma_correction():
-    pass
+def gamma_correction(image):
+    return image
 
-def erosion():
-    pass
+def erosion(image):
+    return image
 
-def dilation():
+def dilation(image):
+    return image
+
+def threshold(image):
+    return image
+
+def components(image):
     pass
 
 def main():
@@ -16,6 +22,15 @@ def main():
     image = cv.imread(path, cv.IMREAD_GRAYSCALE)
 
     cv.imshow('Initial Image', image)
+
+    image = gamma_correction(image)
+    image = erosion(image)
+    image = dilation(image)
+    image = threshold(image)
+
+    cv.imshow('Binary Image', image)
+
+    components(image)
 
     cv.waitKey(0)
 
