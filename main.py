@@ -1,6 +1,17 @@
 import cv2 as cv
 
-def gamma_correction(image):
+def gamma_correction(image, a, gamma):
+    rows, cols = image.shape
+
+    for i in range(rows):
+        for j in range(cols):
+            new_pixel = int(a * pow(image[i, j] / 255, gamma) * 255)
+
+            if new_pixel > 255:
+                new_pixel = 255
+
+            image[i, j] = new_pixel
+
     return image
 
 def erosion(image):
@@ -26,7 +37,7 @@ def main():
 
     cv.imshow('Initial Image', image)
 
-    image = gamma_correction(image)
+    image = gamma_correction(image, 2, 6)
     image = erosion(image)
     image = dilation(image)
     image = threshold(image)
