@@ -60,7 +60,29 @@ def dilation(image, kernel):
     return result
 
 def threshold(image):
-    return image
+    hist, _ = np.histogram(image, bins=256, range=(0, 256))
+    total_pixels = image.size
+
+    best_threshold = 0
+    best_variance = 0
+
+    for t in range(1, 256):
+        if np.sum(hist[:t]) == 0 or np.sum(hist[t:]) == 0:
+            continue
+
+        w0 = np.sum(hist[:t])/total_pixels
+        w1 = np.sum(hist[t:])/total_pixels
+
+        u0 = np.sum(np.arange(t)*hist[:t]) / (w0*total_pixels)
+        u1 = np.sum(np.arange(t, 256)*hist[t:]) / (w1*total_pixels)
+
+        variance = w0 * w1 * (u0-u1) ** 2
+
+        if variance > best_variance:
+            best_threshold = t
+            best_variance = variance
+
+    return (image > best_threshold).astype(np.uint8) * 255
 
 def components(image):
     pass
@@ -84,7 +106,7 @@ def main():
 
     image = gamma_correction(image, 2, 6)
     image = erosion(image, kernel)
-    image = dilation(image, kernel)
+    # image = dilation(image, kernel)
     image = threshold(image)
 
     cv.imshow('Binary Image', image)
