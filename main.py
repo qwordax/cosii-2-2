@@ -3,6 +3,9 @@ import cv2 as cv
 def gamma_correction():
     pass
 
+def erosion():
+    pass
+
 def main():
     path = input('path: ')
     k = int(input('k: '))
