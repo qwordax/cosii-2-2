@@ -13,5 +13,11 @@ def main():
     path = input('path: ')
     k = int(input('k: '))
 
+    image = cv.imread(path, cv.IMREAD_GRAYSCALE)
+
+    cv.imshow('Initial Image', image)
+
+    cv.waitKey(0)
+
 if __name__ == "__main__":
     main()
