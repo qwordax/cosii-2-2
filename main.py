@@ -15,6 +15,9 @@ def threshold(image):
 def components(image):
     pass
 
+def k_means(image, k):
+    pass
+
 def main():
     path = input('path: ')
     k = int(input('k: '))
@@ -31,6 +34,7 @@ def main():
     cv.imshow('Binary Image', image)
 
     components(image)
+    k_means(image, k)
 
     cv.waitKey(0)
 
