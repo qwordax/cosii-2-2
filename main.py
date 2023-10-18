@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+import warnings
 
 def gamma_correction(image, a, gamma):
     rows, cols = image.shape
@@ -206,6 +207,8 @@ def k_means(data, k):
         print(f'{i+1}: {cluster_components}')
 
 def main():
+    warnings.filterwarnings('ignore')
+
     kernel = np.array([[1, 1, 1, 1, 1],
                        [1, 1, 1, 1, 1],
                        [1, 1, 1, 1, 1],
